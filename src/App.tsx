@@ -26,10 +26,28 @@ function App() {
     setResponses(null);
 
     try {
+      // Try the API route (works on Vercel)
       const response = await axios.post<{ responses: Responses }>(
-        '/api/generate',  // Vercel automatically routes /api/* to serverless functions
+        '/api/generate',
         { email }
-      );
+      ).catch(async (err) => {
+        // If it fails (local dev), use mock responses
+        if (err.code === 'ERR_NETWORK' || err.response?.status === 404) {
+          console.log('Using mock responses for local testing');
+          await new Promise(resolve => setTimeout(resolve, 1500));
+          return {
+            data: {
+              responses: {
+                professional: "Thank you for reaching out. I will review your inquiry and provide a comprehensive response within 24 hours.",
+                friendly: "Hey! Thanks for getting in touch. I'll look into this and get back to you soon!",
+                brief: "Thanks for your message. Will respond within 24 hours."
+              }
+            }
+          };
+        }
+        throw err;
+      });
+      
       setResponses(response.data.responses);
     } catch (err: any) {
       setError(
@@ -102,21 +120,18 @@ function App() {
           </div>
         )}
 
-      <footer>
-        <p>
-          <strong>Demo Version</strong> - Smart pre-generated responses
-        </p>
-        <p>
-          Built by <strong>Yazan Kherfan</strong> | 
-          <a href="https://github.com/yourusername/email-ai-responder" target="_blank"> View Code</a>
-        </p>
-        <p>
-          Want the live AI version? → <a href="mailto:ykherfan8@gmail.com">Contact Me</a>
-        </p>
-      </footer>
-            </div>
-          </div>
-        );
-      }
+        <footer>
+          <p>
+            Built by <strong>Yazan Kherfan</strong> | Full-Stack Developer
+          </p>
+          <p>
+            Like this? Let's build your custom AI tool →{' '}
+            <a href="mailto:ykherfan8@gmail.com">Contact Me</a>
+          </p>
+        </footer>
+      </div>
+    </div>
+  );
+}
 
 export default App;
